@@ -345,7 +345,8 @@
           <div class="label">학습 모드</div>
           <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.3rem;">
             <button class="btn" id="wordPopupBtn">단어 익히기 (E)</button>
-            <button class="btn" id="formPopupBtn">수형문 익히기</button>
+            <button class="btn" id="formPopupBtn">수형문 익히기 (H)</button>
+            <button class="btn" id="sentencePopupBtn">문장 익히기 (S)</button>
             <button class="btn" id="hidePopupBtn">팝업 닫기</button>
           </div>
         </div>
@@ -1297,7 +1298,7 @@
     let currentIndex = 0;
     let isRandom = false;
 
-    // 팝업 모드: "word" | "handshape"
+    // 팝업 모드: "word" | "handshape" | "sentence"
     let overlayMode = "word";
 
     // ===== 상태 저장 / 복원 함수 =====
@@ -1390,8 +1391,10 @@
 
     const wordPopupBtn = document.getElementById("wordPopupBtn");
     const formPopupBtn = document.getElementById("formPopupBtn");
+    const sentencePopupBtn = document.getElementById("sentencePopupBtn"); // ← 추가
     const hidePopupBtn = document.getElementById("hidePopupBtn");
     const autoNextBtn = document.getElementById("autoNextToggle");
+
 
     // ===== 3. 도우미 함수들 =====
     function shuffleArray(array) {
@@ -1531,17 +1534,21 @@
     function updateOverlayText() {
       const clip = clipsCurrent[currentIndex];
       let text = "";
-
+      const pureSentence = (clip.sentence || "").replace(/^\d+\)\s*/, "");
+    
       if (overlayMode === "word") {
         text = clip.headword || "";
       } else if (overlayMode === "handshape") {
         text = clip.handshape || "";
+      } else if (overlayMode === "sentence") {
+        text = pureSentence;
       } else {
-        text = (clip.sentence || "").replace(/^\d+\)\s*/, "");
+        text = pureSentence;
       }
-
+    
       exampleTextEl.textContent = text || "내용이 없습니다.";
     }
+
 
     function showOverlay(mode) {
       if (mode) overlayMode = mode;
@@ -1606,6 +1613,9 @@
     formPopupBtn.addEventListener("click", () => {
       showOverlay("handshape");
     });
+    sentencePopupBtn.addEventListener("click", () => {
+      showOverlay("sentence");
+    });
     hidePopupBtn.addEventListener("click", hideOverlay);
 
     // ===== 자동재생 기능 =====
@@ -1625,70 +1635,99 @@
 
     // ===== 키보드 단축키 =====
     document.addEventListener("keydown", (e) => {
-      const tag = e.target.tagName.toLowerCase();
-      if (tag === "input" || tag === "textarea") return;
+  const tag = e.target.tagName.toLowerCase();
+  if (tag === "input" || tag === "textarea") return;
 
-      // ★ Ctrl+F는 브라우저 '찾기'만 동작하도록: 전체화면 무시
-      if ((e.key === "f" || e.key === "F") && e.ctrlKey) {
-        return; // 아무 것도 안 하고 브라우저 기본 동작에 맡김
-      }
+  // ★ Ctrl+F는 브라우저 '찾기'만 동작하도록: 전체화면 무시
+  if ((e.key === "f" || e.key === "F") && e.ctrlKey) {
+    return;
+  }
 
-      switch (e.key) {
-        case " ":
-          e.preventDefault();
-          togglePlay();
-          break;
-        case "ArrowRight":
-          e.preventDefault();
-          nextClip();
-          break;
-        case "ArrowLeft":
-          e.preventDefault();
-          prevClip();
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          changeSpeed(0.25);
-          break;
-        case "ArrowDown":
-          e.preventDefault();
-          changeSpeed(-0.25);
-          break;
-        case "[":
-          seekRelative(-5);
-          break;
-        case "]":
-          seekRelative(5);
-          break;
-        case "f":
-        case "F":
-          // Ctrl+F는 위에서 이미 걸러짐
-          toggleFullscreen();
-          break;
-        case "r":
-        case "R":
-          toggleRandomMode();
-          break;
-        case "Enter":
-          toggleAnswer();
-          break;
-        case "e":
-        case "E":
-          e.preventDefault();
-          // E 키는 항상 "단어 익히기" 모드
-          if (exampleOverlayEl.classList.contains("show") && overlayMode === "word") {
-            hideOverlay();
-          } else {
-            showOverlay("word");
-          }
-          break;
-        default:
-          if (e.key >= "0" && e.key <= "9") {
-            const num = parseInt(e.key, 10);
-            seekPercent(num === 0 ? 0 : num / 10);
-          }
+  switch (e.key) {
+    case " ":
+      e.preventDefault();
+      togglePlay();
+      break;
+    case "ArrowRight":
+      e.preventDefault();
+      nextClip();
+      break;
+    case "ArrowLeft":
+      e.preventDefault();
+      prevClip();
+      break;
+    case "ArrowUp":
+      e.preventDefault();
+      changeSpeed(0.25);
+      break;
+    case "ArrowDown":
+      e.preventDefault();
+      changeSpeed(-0.25);
+      break;
+    case "[":
+      seekRelative(-5);
+      break;
+    case "]":
+      seekRelative(5);
+      break;
+    case "f":
+    case "F":
+      // Ctrl+F는 위에서 이미 걸러짐
+      toggleFullscreen();
+      break;
+    case "r":
+    case "R":
+      toggleRandomMode();
+      break;
+    case "Enter":
+      toggleAnswer();
+      break;
+
+    // 단어 팝업 (E)
+    case "e":
+    case "E":
+      // Ctrl+E, Ctrl+Shift+E 같은 브라우저 단축키는 건드리지 않기
+      if (e.ctrlKey || e.metaKey) return;
+      e.preventDefault();
+      if (exampleOverlayEl.classList.contains("show") && overlayMode === "word") {
+        hideOverlay();
+      } else {
+        showOverlay("word");
       }
-    });
+      break;
+
+    // 수형문 팝업 (H)
+    case "h":
+    case "H":
+      if (e.ctrlKey || e.metaKey) return;
+      e.preventDefault();
+      if (exampleOverlayEl.classList.contains("show") && overlayMode === "handshape") {
+        hideOverlay();
+      } else {
+        showOverlay("handshape");
+      }
+      break;
+
+    // 문장 팝업 (S)
+    case "s":
+    case "S":
+      if (e.ctrlKey || e.metaKey) return;
+      e.preventDefault();
+      if (exampleOverlayEl.classList.contains("show") && overlayMode === "sentence") {
+        hideOverlay();
+      } else {
+        showOverlay("sentence");
+      }
+      break;
+
+    default:
+      if (e.key >= "0" && e.key <= "9") {
+        const num = parseInt(e.key, 10);
+        seekPercent(num === 0 ? 0 : num / 10);
+      }
+  }
+});
+
 
     // 프레임 단위 재생 (, / .)
     let FRAME_TIME = 1 / 30;
