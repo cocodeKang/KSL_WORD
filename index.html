@@ -300,8 +300,8 @@
           <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
             <button class="btn" id="slowerBtn">느리게(↓)</button>
             <button class="btn" id="fasterBtn">빠르게(↑)</button>
-            <button class="btn" id="backwardBtn">⏪ 5초([)</button>
-            <button class="btn" id="forwardBtn">⏩ 5초(])</button>
+            <button class="btn" id="backwardBtn">⏪ 0.5초([)</button>
+            <button class="btn" id="forwardBtn">⏩ 0.5초(])</button>
             <button class="btn" id="fullscreenBtn">전체화면(F)</button>
           </div>
           <div style="display:flex; gap:0.4rem; align-items:center;">
@@ -357,7 +357,7 @@
             <span><span class="kbd">Space</span> 재생/일시정지</span>
             <span><span class="kbd">← / →</span> 이전 / 다음</span>
             <span><span class="kbd">↑ / ↓</span> 속도 조절</span>
-            <span><span class="kbd">[ / ]</span> -5초 / +5초</span>
+            <span><span class="kbd">[ / ]</span> -0.5초 / +0.5초</span>
             <span><span class="kbd">F</span> 전체화면 (Ctrl+F는 페이지 찾기)</span>
             <span><span class="kbd">R</span> 랜덤 토글 + 순서 섞기</span>
             <span><span class="kbd">0~9</span> 해당 % 위치로 점프</span>
@@ -1601,8 +1601,8 @@
     togglePlayBtn.addEventListener("click", togglePlay);
     slowerBtn.addEventListener("click", () => changeSpeed(-0.25));
     fasterBtn.addEventListener("click", () => changeSpeed(0.25));
-    backwardBtn.addEventListener("click", () => seekRelative(-5));
-    forwardBtn.addEventListener("click", () => seekRelative(5));
+    backwardBtn.addEventListener("click", () => seekRelative(-0.5));
+    forwardBtn.addEventListener("click", () => seekRelative(0.5));
     fullscreenBtn.addEventListener("click", toggleFullscreen);
     randomBtn.addEventListener("click", toggleRandomMode);
     toggleAnswerBtn.addEventListener("click", toggleAnswer);
