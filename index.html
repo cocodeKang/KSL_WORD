@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>수어 단어 학습 사이트 - 테스트</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: "Noto Sans KR", system-ui, -apple-system, sans-serif;
+      background: #111827;
+      color: #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      padding: 0.75rem 1.25rem;
+      background: #020617;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #1f2937;
+    }
+    header h1 {
+      font-size: 1rem;
+      margin: 0;
+    }
+    header .meta {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .player-area {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+    @media (max-width: 900px) {
+      .player-area {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+    .video-card {
+      background: #020617;
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .btn.on {
+      background: #16a34a !important;
+      border-color: #22c55e !important;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 0.75rem;
+      background: #000;
+      max-height: 100vh;
+      display: block;
+    }
+
+    .video-wrapper:fullscreen {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .video-wrapper:fullscreen video {
+      width: 100%;
+      height: 100%;
+      border-radius: 0;
+      object-fit: contain;
+    }
+
+    /* 팝업 오버레이 */
+    .example-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      color: #000000;
+      text-align: center;
+      padding: 2rem;
+      z-index: 10;
+      box-sizing: border-box;
+    }
+    .example-overlay.show {
+      display: flex;
+    }
+    .example-text {
+      font-size: 2.2rem;
+      line-height: 1.4;
+      word-break: keep-all;
+    }
+
+    .controls-top,
+    .controls-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+    .btn {
+      border: 1px solid #374151;
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 999px;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: background 0.15s, border-color 0.15s, transform 0.08s;
+      user-select: none;
+    }
+    .btn:hover {
+      background: #1f2937;
+      border-color: #4b5563;
+      transform: translateY(-1px);
+    }
+    .btn:active {
+      transform: translateY(0);
+      background: #030712;
+    }
+    .btn-primary {
+      background: #2563eb;
+      border-color: #3b82f6;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+      border-color: #60a5fa;
+    }
+    .chip {
+      border-radius: 999px;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.75rem;
+      background: #0b1120;
+      border: 1px solid #1f2937;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .chip-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 999px;
+      background: #4b5563;
+    }
+    .chip-dot.on {
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.15);
+    }
+    .info-card {
+      background: #020617;
+      border-radius: 0.75rem;
+      padding: 0.75rem 0.9rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+    }
+    .label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #9ca3af;
+    }
+    .answer-box {
+      background: #020617;
+      border-radius: 0.6rem;
+      border: 1px dashed #374151;
+      padding: 0.6rem 0.7rem;
+      margin-top: 0.3rem;
+    }
+    .answer-line {
+      margin-top: 0.3rem;
+    }
+    .answer-line strong {
+      color: #e5e7eb;
+    }
+    .hidden {
+      display: none;
+    }
+    .kbd-hint {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 0.6rem;
+    }
+    .kbd {
+      border-radius: 0.35rem;
+      border: 1px solid #4b5563;
+      padding: 0.05rem 0.3rem;
+      font-size: 0.7rem;
+      background: #020617;
+      color: #e5e7eb;
+    }
+    .list-card {
+      margin-top: 0.5rem;
+      background: #020617;
+      border-radius: 0.6rem;
+      border: 1px solid #111827;
+      max-height: 220px;
+      overflow: auto;
+    }
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.8rem;
+      border-bottom: 1px solid #020617;
+      cursor: pointer;
+    }
+    .list-item:last-child {
+      border-bottom: none;
+    }
+    .list-item.active {
+      background: #1f2937;
+    }
+    .list-item span.idx {
+      opacity: 0.6;
+      margin-right: 0.3rem;
+    }
+    footer {
+      padding: 0.5rem 1rem;
+      font-size: 0.7rem;
+      color: #9ca3af;
+      border-top: 1px solid #1f2937;
+      background: #020617;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>수어 단어 학습 · 테스트</h1>
+    <div class="meta">
+      v2.1 · 단어/수형문 팝업
+    </div>
+  </header>
+
+  <main>
+    <div class="player-area">
+      <!-- 왼쪽: 비디오 -->
+      <section class="video-card">
+        <div class="controls-top">
+          <div>
+            <span class="label">현재 영상</span><br />
+            <strong id="clipTitle">–</strong>
+            <span id="clipMeta" style="font-size:0.8rem; opacity:0.75;"></span>
+          </div>
+          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+            <button class="btn" id="prevBtn">← 이전(Left)</button>
+            <button class="btn btn-primary" id="nextBtn">다음(Right) →</button>
+            <button class="btn" id="togglePlayBtn">▶ / ⏸</button>
+            <button class="btn" id="autoNextToggle">자동재생: OFF</button>
+          </div>
+        </div>
+
+        <!-- 비디오 + 팝업 -->
+        <div class="video-wrapper" id="videoWrapper">
+          <video id="video" controls playsinline preload="metadata"></video>
+          <div class="example-overlay" id="exampleOverlay">
+            <div class="example-text" id="exampleText">단어/수형문이 여기에 표시됩니다.</div>
+          </div>
+        </div>
+
+        <div class="controls-bottom">
+          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+            <button class="btn" id="slowerBtn">느리게(↓)</button>
+            <button class="btn" id="fasterBtn">빠르게(↑)</button>
+            <button class="btn" id="backwardBtn">⏪ 5초([)</button>
+            <button class="btn" id="forwardBtn">⏩ 5초(])</button>
+            <button class="btn" id="fullscreenBtn">전체화면(F)</button>
+          </div>
+          <div style="display:flex; gap:0.4rem; align-items:center;">
+            <button class="btn" id="randomBtn">랜덤(R)</button>
+            <span class="chip">
+              <span id="randomDot" class="chip-dot"></span>
+              <span id="randomText">순차 재생</span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 오른쪽: 정답 / 목록 / 단축키 / 학습모드 -->
+      <section class="info-card">
+        <div>
+          <div class="label">정답 확인</div>
+          <button class="btn btn-primary" id="toggleAnswerBtn">정답 보기 / 숨기기 (Enter)</button>
+          <div class="answer-box hidden" id="answerBox">
+            <div class="answer-line">
+              <strong>표제어:</strong> <span id="answerHeadword">–</span>
+            </div>
+            <div class="answer-line">
+              <strong>용례:</strong>
+              <div id="answerSentence" style="margin-top:0.2rem;"></div>
+            </div>
+            <div class="answer-line">
+              <strong>수형문:</strong>
+              <div id="answerHandshape" style="margin-top:0.2rem;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="label">목록</div>
+          <div class="list-card" id="listContainer">
+            <!-- JS로 목록 생성 -->
+          </div>
+        </div>
+
+        <div>
+          <div class="label">학습 모드</div>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.3rem;">
+            <button class="btn" id="wordPopupBtn">단어 익히기 (E)</button>
+            <button class="btn" id="formPopupBtn">수형문 익히기</button>
+            <button class="btn" id="hidePopupBtn">팝업 닫기</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="label">단축키 안내</div>
+          <div class="kbd-hint">
+            <span><span class="kbd">Space</span> 재생/일시정지</span>
+            <span><span class="kbd">← / →</span> 이전 / 다음</span>
+            <span><span class="kbd">↑ / ↓</span> 속도 조절</span>
+            <span><span class="kbd">[ / ]</span> -5초 / +5초</span>
+            <span><span class="kbd">F</span> 전체화면 (Ctrl+F는 페이지 찾기)</span>
+            <span><span class="kbd">R</span> 랜덤 토글 + 순서 섞기</span>
+            <span><span class="kbd">0~9</span> 해당 % 위치로 점프</span>
+            <span><span class="kbd">Enter</span> 정답 보기/숨기기</span>
+            <span><span class="kbd">E</span> 단어 팝업</span>
+            <span><span class="kbd">, / .</span> 이전 / 다음 프레임</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div>테스트 데이터: 과일 단어 몇 개</div>
+    <div>KSL 사전 동영상 URL 또는 videos 폴더 영상을 연결해서 사용하세요.</div>
+  </footer>
+
+  <script>
+    // ===== 0. 비디오 경로 기본 폴더 (로컬 파일 쓸 때) =====
+    const VIDEO_BASE_PATH = "./videos/";
+    const STORAGE_KEY = "signWordPlayerSettings_v1";
+
+    // ===== 1. 데이터 정의 =====
+    // 실제 사용 시 아래 배열만 수정하면 됨
+    const clipsOriginal = [
+      {
+        id: "1",
+        headword: "모기, 벌",
+        sentence: "모기와 벌은 여름철에 자주 보이는 곤충입니다.",
+        handshape: "수형문 예시: {벌} {모기}",
+        src: "https://ksldict.korean.go.kr/kslserv/signFile/video/main/202310/asmMaKkD4GS7gkZA.mp4"
+      },
+      {
+        id: "2",
+        headword: "개미",
+        sentence: "개미가 줄을 지어 먹이를 옮기고 있다.",
+        handshape: "수형문 예시: {개미}",
+        src: "https://ksldict.korean.go.kr/kslserv/signFile/video/main/202509/bH3K0cR4OFufrCwY.mp4"
+      },
+      {
+        id: "3",
+        headword: "수박",
+        sentence: "여름에는 차가운 수박을 먹으면 시원하다.",
+        handshape: "수형문 예시: {수박}",
+        src: "https://ksldict.korean.go.kr/kslserv/signFile/video/main/202312/hQ2rRHRJ6PxsN6Hu.mp4"
+      },
+      {
+        id: "4",
+        headword: "감",
+        sentence: "가을에는 감이 잘 익는다.",
+        handshape: "수형문 예시: {감}",
+        src: "https://ksldict.korean.go.kr/kslserv/signFile/video/main/202410/mCyt3d67zZ4XAzpM.mp4"
+      },
+      {
+        id: "5",
+        headword: "포도",
+        sentence: "나는 보라색 포도를 좋아한다.",
+        handshape: "수형문 예시: F+ /▽) ▽(/△( △)/▽)",
+        src: "https://ksldict.korean.go.kr/kslserv/signFile/video/main/202410/MU9fwduuL3VV2pFA.mp4"
+      },
+      {
+        id: "6",
+        headword: "배[과일]",
+        sentence: "달콤한 배 한 조각을 먹었다.",
+        handshape: "수형문 예시: ㅈㅁ/ㅈ →***",
+        src: "https://ksldict.korean.go.kr/kslserv/signFile/video/main/202410/6QK9OBbhwtZK9626.mp4"
+      }
+    ];
+
+    let clipsCurrent = [...clipsOriginal];
+    let currentIndex = 0;
+    let isRandom = false;
+
+    // 팝업 모드: "word" | "handshape"
+    let overlayMode = "word";
+
+    // ===== 상태 저장 / 복원 함수 =====
+    function saveState() {
+      try {
+        const data = {
+          isRandom,
+          currentIndex,
+          order: clipsCurrent.map(c => c.id),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.error("saveState error", e);
+      }
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        clipsCurrent = [...clipsOriginal];
+        currentIndex = 0;
+        isRandom = false;
+        return;
+      }
+
+      try {
+        const data = JSON.parse(raw);
+
+        isRandom = !!data.isRandom;
+
+        if (Array.isArray(data.order) && data.order.length > 0) {
+          const idToClip = new Map(clipsOriginal.map(c => [c.id, c]));
+          const reordered = data.order
+            .map(id => idToClip.get(id))
+            .filter(Boolean);
+
+          if (reordered.length === clipsOriginal.length) {
+            clipsCurrent = reordered;
+          } else {
+            clipsCurrent = [...clipsOriginal];
+          }
+        } else {
+          clipsCurrent = [...clipsOriginal];
+        }
+
+        if (
+          typeof data.currentIndex === "number" &&
+          data.currentIndex >= 0 &&
+          data.currentIndex < clipsCurrent.length
+        ) {
+          currentIndex = data.currentIndex;
+        } else {
+          currentIndex = 0;
+        }
+      } catch (e) {
+        console.error("loadState error", e);
+        clipsCurrent = [...clipsOriginal];
+        currentIndex = 0;
+        isRandom = false;
+      }
+    }
+
+    // ===== 2. DOM 요소 =====
+    const videoEl = document.getElementById("video");
+    const videoWrapperEl = document.getElementById("videoWrapper");
+    const clipTitleEl = document.getElementById("clipTitle");
+    const clipMetaEl = document.getElementById("clipMeta");
+    const answerBoxEl = document.getElementById("answerBox");
+    const answerHeadwordEl = document.getElementById("answerHeadword");
+    const answerSentenceEl = document.getElementById("answerSentence");
+    const answerHandshapeEl = document.getElementById("answerHandshape");
+    const listContainerEl = document.getElementById("listContainer");
+
+    const randomDotEl = document.getElementById("randomDot");
+    const randomTextEl = document.getElementById("randomText");
+
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const togglePlayBtn = document.getElementById("togglePlayBtn");
+    const slowerBtn = document.getElementById("slowerBtn");
+    const fasterBtn = document.getElementById("fasterBtn");
+    const backwardBtn = document.getElementById("backwardBtn");
+    const forwardBtn = document.getElementById("forwardBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const randomBtn = document.getElementById("randomBtn");
+    const toggleAnswerBtn = document.getElementById("toggleAnswerBtn");
+
+    const exampleOverlayEl = document.getElementById("exampleOverlay");
+    const exampleTextEl = document.getElementById("exampleText");
+
+    const wordPopupBtn = document.getElementById("wordPopupBtn");
+    const formPopupBtn = document.getElementById("formPopupBtn");
+    const hidePopupBtn = document.getElementById("hidePopupBtn");
+    const autoNextBtn = document.getElementById("autoNextToggle");
+
+    // ===== 3. 도우미 함수들 =====
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function getClipVideoUrl(clip) {
+      if (clip.src) return clip.src;
+      if (clip.file) return VIDEO_BASE_PATH + clip.file;
+      return "";
+    }
+
+    function loadClip(index, { autoplay = false } = {}) {
+      if (index < 0 || index >= clipsCurrent.length) return;
+      currentIndex = index;
+      const clip = clipsCurrent[currentIndex];
+
+      const url = getClipVideoUrl(clip);
+      if (url) videoEl.src = url;
+
+      if (autoplay) {
+        videoEl.play().catch(() => {});
+      }
+
+      clipTitleEl.textContent = `${clip.headword}`;
+      const pureSentence = (clip.sentence || "").replace(/^\d+\)\s*/, "");
+
+      const fileLabel = clip.file
+        ? clip.file
+        : (clip.src ? clip.src.split("/").pop() : "");
+
+      clipMetaEl.textContent = pureSentence
+        ? ` · ${pureSentence} (파일: ${fileLabel})`
+        : fileLabel ? ` (파일: ${fileLabel})` : "";
+
+      answerHeadwordEl.textContent = clip.headword || "";
+      answerSentenceEl.textContent = pureSentence || "";
+      answerHandshapeEl.textContent = clip.handshape || "";
+
+      // 팝업에 기본으로 단어 세팅 (모드에 따라 다시 바뀜)
+      updateOverlayText();
+
+      updateListActive();
+      saveState();
+    }
+
+    function updateListActive() {
+      const items = listContainerEl.querySelectorAll(".list-item");
+      items.forEach((item, idx) => {
+        if (idx === currentIndex) {
+          item.classList.add("active");
+        } else {
+          item.classList.remove("active");
+        }
+      });
+    }
+
+    function toggleAnswer() {
+      answerBoxEl.classList.toggle("hidden");
+    }
+
+    function updateRandomUI() {
+      if (isRandom) {
+        randomDotEl.classList.add("on");
+        randomTextEl.textContent = "랜덤 재생";
+      } else {
+        randomDotEl.classList.remove("on");
+        randomTextEl.textContent = "순차 재생";
+      }
+    }
+
+    function toggleRandomMode() {
+      isRandom = !isRandom;
+
+      if (isRandom) {
+        clipsCurrent = shuffleArray(clipsOriginal);
+        currentIndex = 0;
+      } else {
+        clipsCurrent = [...clipsOriginal];
+        currentIndex = 0;
+      }
+
+      updateRandomUI();
+      buildList();
+      loadClip(currentIndex, { autoplay: false });
+      saveState();
+    }
+
+    function nextClip() {
+      const nextIndex = (currentIndex + 1) % clipsCurrent.length;
+      loadClip(nextIndex);
+    }
+
+    function prevClip() {
+      const prevIndex = (currentIndex - 1 + clipsCurrent.length) % clipsCurrent.length;
+      loadClip(prevIndex);
+    }
+
+    function changeSpeed(delta) {
+      let newRate = videoEl.playbackRate + delta;
+      if (newRate < 0.25) newRate = 0.25;
+      if (newRate > 3) newRate = 3;
+      videoEl.playbackRate = newRate;
+    }
+
+    function seekRelative(seconds) {
+      videoEl.currentTime = Math.max(0, videoEl.currentTime + seconds);
+    }
+
+    function togglePlay() {
+      if (videoEl.paused) {
+        videoEl.play().catch(() => {});
+      } else {
+        videoEl.pause();
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        videoWrapperEl.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    }
+
+    function seekPercent(percent) {
+      if (!videoEl.duration || isNaN(videoEl.duration)) return;
+      videoEl.currentTime = videoEl.duration * percent;
+    }
+
+    // ===== 팝업 관련 =====
+    function updateOverlayText() {
+      const clip = clipsCurrent[currentIndex];
+      let text = "";
+
+      if (overlayMode === "word") {
+        text = clip.headword || "";
+      } else if (overlayMode === "handshape") {
+        text = clip.handshape || "";
+      } else {
+        text = (clip.sentence || "").replace(/^\d+\)\s*/, "");
+      }
+
+      exampleTextEl.textContent = text || "내용이 없습니다.";
+    }
+
+    function showOverlay(mode) {
+      if (mode) overlayMode = mode;
+      updateOverlayText();
+      exampleOverlayEl.classList.add("show");
+    }
+
+    function hideOverlay() {
+      exampleOverlayEl.classList.remove("show");
+    }
+
+    function toggleOverlay(mode) {
+      if (exampleOverlayEl.classList.contains("show") && !mode) {
+        hideOverlay();
+      } else {
+        showOverlay(mode || overlayMode);
+      }
+    }
+
+    // ===== 4. 목록 생성 =====
+    function buildList() {
+      listContainerEl.innerHTML = "";
+      clipsCurrent.forEach((clip, idx) => {
+        const div = document.createElement("div");
+        div.className = "list-item";
+        const pureSentence = (clip.sentence || "").replace(/^\d+\)\s*/, "");
+        const fileLabel = clip.file
+          ? clip.file
+          : (clip.src ? clip.src.split("/").pop() : "");
+        div.innerHTML = `
+          <div>
+            <span class="idx">${idx + 1}.</span>
+            <strong>${clip.headword || ""}</strong>
+            <span style="opacity:0.7;">${pureSentence}</span>
+          </div>
+          <div style="opacity:0.6; font-size:0.75rem;">${fileLabel}</div>
+        `;
+        div.addEventListener("click", () => {
+          loadClip(idx);
+        });
+        listContainerEl.appendChild(div);
+      });
+      updateListActive();
+    }
+
+    // ===== 5. 이벤트 연결 =====
+    prevBtn.addEventListener("click", prevClip);
+    nextBtn.addEventListener("click", nextClip);
+    togglePlayBtn.addEventListener("click", togglePlay);
+    slowerBtn.addEventListener("click", () => changeSpeed(-0.25));
+    fasterBtn.addEventListener("click", () => changeSpeed(0.25));
+    backwardBtn.addEventListener("click", () => seekRelative(-5));
+    forwardBtn.addEventListener("click", () => seekRelative(5));
+    fullscreenBtn.addEventListener("click", toggleFullscreen);
+    randomBtn.addEventListener("click", toggleRandomMode);
+    toggleAnswerBtn.addEventListener("click", toggleAnswer);
+
+    // 학습 모드 버튼
+    wordPopupBtn.addEventListener("click", () => {
+      showOverlay("word");
+    });
+    formPopupBtn.addEventListener("click", () => {
+      showOverlay("handshape");
+    });
+    hidePopupBtn.addEventListener("click", hideOverlay);
+
+    // ===== 자동재생 기능 =====
+    let autoNext = false;
+
+    autoNextBtn.addEventListener("click", () => {
+      autoNext = !autoNext;
+      autoNextBtn.textContent = autoNext ? "자동재생: ON" : "자동재생: OFF";
+      autoNextBtn.classList.toggle("on", autoNext);
+    });
+
+    videoEl.addEventListener("ended", () => {
+      if (autoNext) {
+        nextClip();
+      }
+    });
+
+    // ===== 키보드 단축키 =====
+    document.addEventListener("keydown", (e) => {
+      const tag = e.target.tagName.toLowerCase();
+      if (tag === "input" || tag === "textarea") return;
+
+      // ★ Ctrl+F는 브라우저 '찾기'만 동작하도록: 전체화면 무시
+      if ((e.key === "f" || e.key === "F") && e.ctrlKey) {
+        return; // 아무 것도 안 하고 브라우저 기본 동작에 맡김
+      }
+
+      switch (e.key) {
+        case " ":
+          e.preventDefault();
+          togglePlay();
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          nextClip();
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          prevClip();
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          changeSpeed(0.25);
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          changeSpeed(-0.25);
+          break;
+        case "[":
+          seekRelative(-5);
+          break;
+        case "]":
+          seekRelative(5);
+          break;
+        case "f":
+        case "F":
+          // Ctrl+F는 위에서 이미 걸러짐
+          toggleFullscreen();
+          break;
+        case "r":
+        case "R":
+          toggleRandomMode();
+          break;
+        case "Enter":
+          toggleAnswer();
+          break;
+        case "e":
+        case "E":
+          e.preventDefault();
+          // E 키는 항상 "단어 익히기" 모드
+          if (exampleOverlayEl.classList.contains("show") && overlayMode === "word") {
+            hideOverlay();
+          } else {
+            showOverlay("word");
+          }
+          break;
+        default:
+          if (e.key >= "0" && e.key <= "9") {
+            const num = parseInt(e.key, 10);
+            seekPercent(num === 0 ? 0 : num / 10);
+          }
+      }
+    });
+
+    // 프레임 단위 재생 (, / .)
+    let FRAME_TIME = 1 / 30;
+
+    function stepForward() {
+      videoEl.pause();
+      videoEl.currentTime = Math.min(videoEl.duration || Infinity, videoEl.currentTime + FRAME_TIME);
+    }
+
+    function stepBackward() {
+      videoEl.pause();
+      videoEl.currentTime = Math.max(0, videoEl.currentTime - FRAME_TIME);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === ",") {
+        e.preventDefault();
+        stepBackward();
+      }
+      if (e.key === ".") {
+        e.preventDefault();
+        stepForward();
+      }
+    });
+
+    // ===== 초기화 =====
+    function init() {
+      loadState();
+      updateRandomUI();
+      buildList();
+      loadClip(currentIndex, { autoplay: false });
+    }
+
+    init();
+  </script>
+</body>
+</html>
