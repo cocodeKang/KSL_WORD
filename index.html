@@ -1296,36 +1296,56 @@
    
       
       
-      ];
+ // ===== 2) 상태 변수(누락되어 에러 나던 부분) =====
+  let clipsCurrent = [];
+  let currentIndex = 0;
+
+  let isRandom = false;   // 랜덤 재생 여부
+  let autoMode = 0;       // 0=OFF, 1=ON(끝나면 정지), 2=LOOP(끝나면 다음)
+  let overlayMode = "word"; // word | meaning | handshape | sentence
+
+  const selectedAreas = new Set();
+  const selectedCategories = new Set();
+
+  // ===== 3) 상태 저장/불러오기 (원래 코드가 깨져 있던 부분) =====
+  function saveState() {
+    try {
+      const data = {
+        isRandom,
+        autoMode,
+        areas: Array.from(selectedAreas),
+        categories: Array.from(selectedCategories),
+        currentClipId: clipsCurrent[currentIndex]?.id ?? null,
+      };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
     }
+  }
 
-    function loadState() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+  function loadState() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
 
-      try {
-        const data = JSON.parse(raw);
-        isRandom = !!data.isRandom;
-        autoMode = [0,1,2].includes(data.autoMode) ? data.autoMode : 0;
+    try {
+      const data = JSON.parse(raw);
+      isRandom = !!data.isRandom;
+      autoMode = [0, 1, 2].includes(data.autoMode) ? data.autoMode : 0;
 
-        if (Array.isArray(data.areas)) {
-          selectedAreas.clear();
-          data.areas.forEach(x => selectedAreas.add(x));
-        }
-        if (Array.isArray(data.categories)) {
-          selectedCategories.clear();
-          data.categories.forEach(x => selectedCategories.add(x));
-        }
-
-        // order는 일단 기억해두고, 필터 적용 후에 currentClipId로 위치 잡기
-        return data;
-      } catch (e) {
-        console.error(e);
+      if (Array.isArray(data.areas)) {
+        selectedAreas.clear();
+        data.areas.forEach(x => selectedAreas.add(x));
       }
+      if (Array.isArray(data.categories)) {
+        selectedCategories.clear();
+        data.categories.forEach(x => selectedCategories.add(x));
+      }
+      return data;
+    } catch (e) {
+      console.error(e);
+      return null;
     }
-
+  }
     // ===== DOM =====
     const videoEl = document.getElementById("video");
     const videoWrapperEl = document.getElementById("videoWrapper");
