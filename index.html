@@ -54,6 +54,7 @@
       flex-direction: column;
       gap: 0.5rem;
     }
+    .example-overlay { cursor: pointer; }
 
     .video-wrapper {
       position: relative;
@@ -1693,6 +1694,22 @@
       touchStartY = e.touches[0].clientY;
       touchStartT = Date.now();
     }, { passive: true });
+    // ✅ 오버레이(슬라이드) 클릭/터치하면 닫기
+exampleOverlayEl.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  hideOverlay();
+});
+
+// ✅ 오버레이가 떠있는 상태에서 영상 영역(검은 배경 포함) 누르면 닫기
+videoWrapperEl.addEventListener("click", () => {
+  if (exampleOverlayEl.classList.contains("show")) hideOverlay();
+});
+exampleOverlayEl.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  hideOverlay();
+}, { passive: false });
 
     videoWrapperEl.addEventListener("touchend", (e) => {
       const t = Date.now() - touchStartT;
