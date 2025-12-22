@@ -1331,7 +1331,8 @@
     try {
       const data = JSON.parse(raw);
       isRandom = !!data.isRandom;
-      autoMode = [0, 1, 2].includes(data.autoMode) ? data.autoMode : 0;
+     autoMode = [0, 1, 2, 3].includes(data.autoMode) ? data.autoMode : 0;
+
 
       if (Array.isArray(data.areas)) {
         selectedAreas.clear();
@@ -1417,16 +1418,6 @@
 }
 
 
-    function autoModeLabel(mode) {
-      if (mode === 0) return "자동재생: OFF";
-      if (mode === 1) return "자동재생: ON(끝나면 정지)";
-      return "자동재생: LOOP(끝나면 다음)";
-    }
-
-    function applyAutoModeUI() {
-      autoModeBtn.textContent = autoModeLabel(autoMode);
-      autoModeBtn.classList.toggle("on", autoMode !== 0);
-    }
 
     function updateRandomUI() {
       if (isRandom) {
@@ -1655,8 +1646,9 @@
 // 2: REPEAT (끝나면 같은 영상 0초로 돌아가 반복)
 function autoModeLabel(mode) {
   if (mode === 0) return "자동재생: OFF";
-  if (mode === 1) return "자동재생: ON";
-  return "자동재생: 반복";
+  if (mode === 1) return "자동재생: ON(끝나면 다음)";
+  if (mode === 2) return "자동재생: 반복";
+  return "자동재생: 넘기면 재생";
 }
 
 function applyAutoModeUI() {
@@ -1664,32 +1656,25 @@ function applyAutoModeUI() {
   autoModeBtn.classList.toggle("on", autoMode !== 0);
 }
 
-// 버튼 클릭: 0 → 1 → 2 → 0
 function cycleAutoMode() {
-  autoMode = (autoMode + 1) % 3;
+  autoMode = (autoMode + 1) % 4; // ✅ 0→1→2→3→0
   applyAutoModeUI();
   saveState();
 }
 
-// 영상 종료 시 동작
 videoEl.addEventListener("ended", () => {
   if (autoMode === 1) {
-    // ON: 다음 영상으로 넘어가서 자동재생
     nextClip({ autoplay: true });
   } else if (autoMode === 2) {
-    // 반복: 같은 영상 0초로 되돌려 재생
     videoEl.currentTime = 0;
     videoEl.play().catch(() => {});
   } else {
-    // OFF: 끝에서 멈춤 (아무것도 안 함)
+    // 0,3: 끝나면 멈춤
   }
 });
 
-        // LOOP: 끝나면 다음으로 + 자동재생
-        nextClip({ autoplay: true });
-      }
-      // autoMode === 1 은 "끝나면 정지"라서 아무 것도 안 함
-    });
+
+        
 
     // ===== 모바일 제스처 =====
     let touchStartX = 0, touchStartY = 0, touchStartT = 0;
