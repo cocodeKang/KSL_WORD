@@ -1301,7 +1301,8 @@
   let currentIndex = 0;
 
   let isRandom = false;   // 랜덤 재생 여부
-  let autoMode = 0;       // 0=OFF, 1=ON(끝나면 정지), 2=LOOP(끝나면 다음)
+  let autoMode = 0; // 0=OFF, 1=끝나면 다음, 2=반복, 3=넘기면 자동재생
+
   let overlayMode = "word"; // word | meaning | handshape | sentence
 
   const selectedAreas = new Set();
@@ -1410,9 +1411,11 @@
     }
 
     function currentAutoplayOnLoad() {
-      // 1/2 모드에서만 "넘길 때 자동재생"
-      return autoMode === 1 || autoMode === 2;
-    }
+  // 1(끝나면 다음), 2(반복), 3(넘기면 자동재생) 에서는
+  // 다음/이전/목록 클릭으로 "로드될 때 자동 재생"
+  return autoMode === 1 || autoMode === 2 || autoMode === 3;
+}
+
 
     function autoModeLabel(mode) {
       if (mode === 0) return "자동재생: OFF";
