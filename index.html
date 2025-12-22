@@ -353,7 +353,7 @@
             <button class="btn" id="hidePopupBtn">팝업 닫기</button>
           </div>
           <div style="margin-top:0.45rem; font-size:0.78rem; opacity:0.75; line-height:1.35;">
-            제스처: <b>아래→위=의미</b>, <b>위→아래=수형문</b>, <b>왼→오=이전</b>, <b>오→왼=다음</b>
+            제스처: <b>아래→위=문장</b>, <b>위→아래=표제어</b>, <b>왼→오=이전</b>, <b>오→왼=다음</b>
           </div>
         </div>
 
@@ -1646,14 +1646,42 @@
     }
 
     // ===== 자동재생 3모드 =====
-    function cycleAutoMode() {
-      autoMode = (autoMode + 1) % 3;
-      applyAutoModeUI();
-      saveState();
-    }
+   // ===== 자동재생 3모드 (요청대로) =====
+// 0: OFF  (끝나면 멈춤)
+// 1: ON   (끝나면 다음 영상 자동 재생)
+// 2: REPEAT (끝나면 같은 영상 0초로 돌아가 반복)
+function autoModeLabel(mode) {
+  if (mode === 0) return "자동재생: OFF";
+  if (mode === 1) return "자동재생: ON";
+  return "자동재생: 반복";
+}
 
-    videoEl.addEventListener("ended", () => {
-      if (autoMode === 2) {
+function applyAutoModeUI() {
+  autoModeBtn.textContent = autoModeLabel(autoMode);
+  autoModeBtn.classList.toggle("on", autoMode !== 0);
+}
+
+// 버튼 클릭: 0 → 1 → 2 → 0
+function cycleAutoMode() {
+  autoMode = (autoMode + 1) % 3;
+  applyAutoModeUI();
+  saveState();
+}
+
+// 영상 종료 시 동작
+videoEl.addEventListener("ended", () => {
+  if (autoMode === 1) {
+    // ON: 다음 영상으로 넘어가서 자동재생
+    nextClip({ autoplay: true });
+  } else if (autoMode === 2) {
+    // 반복: 같은 영상 0초로 되돌려 재생
+    videoEl.currentTime = 0;
+    videoEl.play().catch(() => {});
+  } else {
+    // OFF: 끝에서 멈춤 (아무것도 안 함)
+  }
+});
+
         // LOOP: 끝나면 다음으로 + 자동재생
         nextClip({ autoplay: true });
       }
@@ -1664,23 +1692,33 @@
     let touchStartX = 0, touchStartY = 0, touchStartT = 0;
 
     function onSwipe(dx, dy) {
-      const absX = Math.abs(dx);
-      const absY = Math.abs(dy);
-      const TH = 45; // 민감도
+  const absX = Math.abs(dx);
+  const absY = Math.abs(dy);
+  const TH = 45; // 민감도
 
-      // 좌/우가 더 크면 이전/다음
-      if (absX > absY && absX > TH) {
-        if (dx > 0) prevClip({ autoplay: currentAutoplayOnLoad() });  // 왼→오
-        else nextClip({ autoplay: currentAutoplayOnLoad() });         // 오→왼
-        return;
-      }
-
-      // 상/하가 더 크면 의미/수형문
-      if (absY > absX && absY > TH) {
-        if (dy < 0) showOverlay("meaning");   // 아래→위 (dy 음수)
-        else showOverlay("handshape");        // 위→아래
-      }
+  // 좌/우 스와이프
+  if (absX > absY && absX > TH) {
+    if (dx > 0) {
+      // 왼쪽→오른쪽 : 이전
+      prevClip({ autoplay: currentAutoplayOnLoad() });
+    } else {
+      // 오른쪽→왼쪽 : 다음
+      nextClip({ autoplay: currentAutoplayOnLoad() });
     }
+    return;
+  }
+
+  // 상/하 스와이프
+  if (absY > absX && absY > TH) {
+    if (dy < 0) {
+      // 아래→위 : 문장 팝업
+      showOverlay("sentence");
+    } else {
+      // 위→아래 : 표제어 팝업
+      showOverlay("word");
+    }
+  }
+}
 
     videoWrapperEl.addEventListener("touchstart", (e) => {
       if (!e.touches || e.touches.length !== 1) return;
